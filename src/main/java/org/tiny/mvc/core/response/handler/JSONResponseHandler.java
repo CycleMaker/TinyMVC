@@ -1,4 +1,4 @@
-package org.tiny.mvc.core;
+package org.tiny.mvc.core.response.handler;
 
 import com.alibaba.fastjson2.JSONObject;
 import org.tiny.mvc.common.ContentTypeEnum;
@@ -12,7 +12,7 @@ import java.lang.reflect.Method;
  * @create: 2023-05-16 20 :05
  * @description
  */
-public class JSONResponseHandler implements ResponseHandler{
+public class JSONResponseHandler implements ResponseHandler {
 
     @Override
     public void handleResponse(String contentType, HttpServletResponse response, Method method, Object res) throws IOException {

@@ -8,11 +8,11 @@ import org.tiny.mvc.common.ArgNameDiscover;
 import org.tiny.mvc.common.ContentTypeEnum;
 import org.tiny.mvc.common.Invoker;
 import org.tiny.mvc.common.MethodEnum;
+import org.tiny.mvc.core.response.handler.ResponseHandler;
 import org.tiny.spring.Container;
 import org.tiny.spring.annotation.Autowired;
 import org.tiny.spring.core.processor.BeanPostProcessor;
 
-import javax.servlet.http.HttpServletRequest;
 import java.lang.reflect.Method;
 import java.util.*;
 

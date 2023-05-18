@@ -1,7 +1,7 @@
 package org.tiny.mvc.configure;
 
 import org.tiny.mvc.core.ContextStarter;
-import org.tiny.mvc.core.JSONResponseHandler;
+import org.tiny.mvc.core.response.handler.JSONResponseHandler;
 import org.tiny.mvc.core.MVCBeanPostProcessor;
 import org.tiny.mvc.core.arg.resolver.BaseArgResolver;
 import org.tiny.spring.Container;
