@@ -1,4 +1,4 @@
-package org.tiny.mvc.core;
+package org.tiny.mvc.core.arg.resolver;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;

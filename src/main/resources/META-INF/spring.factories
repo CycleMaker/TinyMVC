@@ -1,1 +1,1 @@
-org.tiny.spring.core.AutoConfiguration=org.tiny.mvc.core.MVCBeanPostProcessor,org.tiny.mvc.core.ContextStarter,org.tiny.mvc.core.JSONResponseHandler
+org.tiny.spring.core.AutoConfiguration=org.tiny.mvc.configure.WebMVCAutoConfigurerBeanFactoryPostProcessor

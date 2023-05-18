@@ -1,4 +1,4 @@
-package org.tiny.mvc.core;
+package org.tiny.mvc.core.arg.resolver;
 
 import com.alibaba.fastjson2.JSONObject;
 import org.tiny.mvc.anno.RequestBody;
