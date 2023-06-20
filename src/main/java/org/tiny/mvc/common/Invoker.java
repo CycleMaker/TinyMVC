@@ -25,11 +25,13 @@ public class Invoker {
     private ResponseHandler responseHandler;
     private ArgNameDiscover argNameDiscover;
     private String contentType;
+    private String originPath;
 
     public Invoker(String contentType, Object bean, Method method, MethodEnum methodEnum, String path, ResponseHandler responseHandler, ArgNameDiscover argNameDiscover) {
         this.contentType = contentType;
         this.bean = bean;
         this.method = method;
+        this.originPath = path;
         this.mvcPath = new MVCPath(path);
         this.responseHandler = responseHandler;
         this.methodEnum = methodEnum;

@@ -31,7 +31,7 @@ public class MVCPath {
 
     public MVCPath(String path) {
         String[] pathStrItems = path.split(SLASH);
-        pathItems = new ArrayList<PathItem>(pathItems.size());
+        pathItems = new ArrayList<PathItem>(pathStrItems.length);
         for (String item : pathStrItems) {
             if (item.startsWith(TEMPLATE_LEFT) && item.endsWith(TEMPLTE_RIGHT)) {
                 pathItems.add(new PathItem(null, item.substring(2, item.length() - 1), 1));

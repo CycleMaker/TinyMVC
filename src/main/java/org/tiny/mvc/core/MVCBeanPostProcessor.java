@@ -2,7 +2,6 @@ package org.tiny.mvc.core;
 
 import org.tiny.mvc.anno.ContentType;
 import org.tiny.mvc.anno.Controller;
-import org.tiny.mvc.anno.GetMapping;
 import org.tiny.mvc.common.ArgNameDiscover;
 import org.tiny.mvc.common.ContentTypeEnum;
 import org.tiny.mvc.common.Invoker;
@@ -35,10 +34,10 @@ public class MVCBeanPostProcessor implements BeanPostProcessor {
         Controller controllerAnno = getControllerAnno(bean);
         if (Objects.nonNull(controllerAnno)) {
             String controllerPath = fixPathWithSlash(controllerAnno.path());
-            List<Invoker> invokers = listMappingAnnoClass(bean, bean.getClass().getDeclaredMethods(), new ArgNameDiscover());
-            if (!invokers.isEmpty()) {
-                String servletName = beanName + "@Servlet@" + controllerPath;
-                container.registerBean(servletName, new MVCServlet(servletName, controllerPath, invokers), true);
+            List<Invoker> invokers = listMappingAnnoClass(bean, bean.getClass().getDeclaredMethods(), new ArgNameDiscover(), controllerPath);
+            for (Invoker invoker : invokers) {
+                String invokerName = invoker.getOriginPath() + "@ServletInvoker";
+                container.registerBean(invokerName, invoker, true);
             }
         }
         return bean;
@@ -56,18 +55,18 @@ public class MVCBeanPostProcessor implements BeanPostProcessor {
         throw new RuntimeException("cannot find suitable ResponseHandler for contentType:" + contentType);
     }
 
-    private List<Invoker> listMappingAnnoClass(Object bean, Method[] methods, ArgNameDiscover argNameDiscover) {
+    private List<Invoker> listMappingAnnoClass(Object bean, Method[] methods, ArgNameDiscover argNameDiscover, String controllerPath) {
         List<Invoker> res = new ArrayList<>();
         for (Method m : methods) {
             if (Modifier.isPublic(m.getModifiers())) {
-                List<Invoker> item = listMappingAnnoClass(bean, m, argNameDiscover);
+                List<Invoker> item = listMappingAnnoClass(bean, m, argNameDiscover, controllerPath);
                 res.addAll(item);
             }
         }
         return res;
     }
 
-    private List<Invoker> listMappingAnnoClass(Object bean, Method method, ArgNameDiscover argNameDiscover) {
+    private List<Invoker> listMappingAnnoClass(Object bean, Method method, ArgNameDiscover argNameDiscover, String controllerPath) {
         List<Invoker> res = new ArrayList<>();
         for (MethodEnum methodEnum : MethodEnum.values()) {
             Annotation annotation = method.getAnnotation(methodEnum.getAnnoClass());
@@ -77,7 +76,7 @@ public class MVCBeanPostProcessor implements BeanPostProcessor {
                 ContentType contentTypeAnno = method.getDeclaredAnnotation(ContentType.class);
                 String contentType = Objects.isNull(contentTypeAnno) ? DEFAULT_CONTENT_TYPE : contentTypeAnno.value();
                 ResponseHandler responseHandler = getResponseHandler(contentType, method);
-                res.add(new Invoker(contentType, bean, method, methodEnum, fixPathWithoutSlash(path), responseHandler, argNameDiscover));
+                res.add(new Invoker(contentType, bean, method, methodEnum, controllerPath + fixPathWithoutSlash(path), responseHandler, argNameDiscover));
             }
         }
         return res;

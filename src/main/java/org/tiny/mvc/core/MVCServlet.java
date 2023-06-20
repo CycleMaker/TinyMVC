@@ -4,7 +4,10 @@ import org.tiny.mvc.common.GlobalExceptionAspect;
 import org.tiny.mvc.common.Invoker;
 import org.tiny.mvc.common.MethodEnum;
 import org.tiny.mvc.core.arg.resolver.ArgResolverManager;
+import org.tiny.spring.Container;
+import org.tiny.spring.annotation.Autowired;
 import org.tiny.spring.annotation.Extension;
+import org.tiny.spring.core.InitializingBean;
 import org.tiny.spring.core.aop.AopContext;
 
 import javax.servlet.ServletException;
@@ -15,38 +18,18 @@ import java.io.IOException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.util.*;
-import java.util.stream.Collectors;
 
 
-public class MVCServlet extends HttpServlet {
+public class MVCServlet extends HttpServlet implements InitializingBean {
 
-    private String servletName;
-
-    private String path;
+    @Autowired
+    private Container container;
 
     private List<Invoker> invokers;
 
-    private static ArgResolverManager argResolverManager = ArgResolverManager.getInstance();
-
-    public String getPath() {
-        return this.path;
-    }
+    private static final ArgResolverManager argResolverManager = ArgResolverManager.getInstance();
 
 
-    public String getServletName() {
-        return servletName;
-    }
-
-    public MVCServlet(String servletName, String path, List<Invoker> invokers) {
-        if (invokers == null || invokers.size() == 0) {
-            throw new IllegalArgumentException();
-        }
-        this.servletName = servletName;
-        this.path = path;
-        this.invokers = invokers;
-    }
-
-    // only for cglib
     public MVCServlet() {
     }
 
@@ -54,6 +37,17 @@ public class MVCServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         getAgent().handle(req, resp, MethodEnum.GetMethod);
+    }
+
+    @Override
+    protected void doPut(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        getAgent().handle(req, resp, MethodEnum.PutMethod);
+    }
+
+
+    @Override
+    protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        getAgent().handle(req, resp, MethodEnum.DeleteMethod);
     }
 
     @Override
@@ -99,4 +93,8 @@ public class MVCServlet extends HttpServlet {
     }
 
 
+    @Override
+    public void afterPropertiesSet() {
+        this.invokers = container.getBeanByType(Invoker.class);
+    }
 }

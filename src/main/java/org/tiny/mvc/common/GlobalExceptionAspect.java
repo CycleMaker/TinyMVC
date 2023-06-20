@@ -12,13 +12,13 @@ import java.lang.reflect.Method;
  */
 public class GlobalExceptionAspect implements Aspect {
     @Override
-    public void before(Object o, Method method, Object[] objects) {
-        System.out.println("before");
+    final public void before(Object o, Method method, Object[] objects) {
+        return;
     }
 
     @Override
-    public void after(Object o, Method method, Object[] objects, Object o1) {
-        System.out.println("after");
+    final public void after(Object o, Method method, Object[] objects, Object o1) {
+        return;
     }
 
     @Override

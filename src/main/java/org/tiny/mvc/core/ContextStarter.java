@@ -24,15 +24,20 @@ import java.util.Objects;
 public class ContextStarter implements ContextFinishListener {
     @Autowired
     private WebMVCAutoConfiguer webMVCAutoConfiguer;
+    @Autowired
+    private MVCServlet mvcServlet;
     private static final Integer DEFAULT_PORT = 8080;
     public static final String CONTEXT_PATH = "";
+
+    private static final String SERVLET_NAME = "MVCServlet";
+
     @Override
     public void finishContext(Container container) {
         Integer port = webMVCAutoConfiguer.getPort() == null ? DEFAULT_PORT : webMVCAutoConfiguer.getPort();
         ArgResolverManager argResolverManager = ArgResolverManager.getInstance();
         container.getBeanByType(ArgResolver.class).forEach(argResolverManager::addArgResolver);
         Tomcat tomcat = initTomcat(port);
-        initMVCContext(tomcat, container.getBeanByType(MVCServlet.class));
+        initMVCContext(tomcat, mvcServlet);
         printBanner(webMVCAutoConfiguer.getMvcBannerPrinter());
         try {
             tomcat.start();
@@ -51,15 +56,13 @@ public class ContextStarter implements ContextFinishListener {
         }
     }
 
-    private void initMVCContext(Tomcat tomcat,List<MVCServlet> servlets) {
+    private void initMVCContext(Tomcat tomcat, MVCServlet mvcServlet) {
         StandardContext context = new StandardContext();
         context.setPath(CONTEXT_PATH);
         context.addLifecycleListener(new Tomcat.FixContextListener());
         tomcat.getHost().addChild(context);
-        for (MVCServlet mvcServlet : servlets) {
-            tomcat.addServlet(CONTEXT_PATH, mvcServlet.getServletName(), mvcServlet);
-            context.addServletMappingDecoded(mvcServlet.getPath(),mvcServlet.getServletName());
-        }
+        tomcat.addServlet(CONTEXT_PATH, SERVLET_NAME, mvcServlet);
+        context.addServletMappingDecoded("/", SERVLET_NAME);
     }
 
     private Tomcat initTomcat(int port) {

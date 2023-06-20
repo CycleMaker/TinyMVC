@@ -16,6 +16,7 @@ public class JSONResponseHandler implements ResponseHandler {
 
     @Override
     public void handleResponse(String contentType, HttpServletResponse response, Method method, Object res) throws IOException {
+        response.setContentType(ContentTypeEnum.JSON.getType());
         if (res instanceof String) {
             response.getWriter().write((String)res);
         } else {
