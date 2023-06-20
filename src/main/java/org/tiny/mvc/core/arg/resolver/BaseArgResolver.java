@@ -1,8 +1,10 @@
 package org.tiny.mvc.core.arg.resolver;
 
 import com.alibaba.fastjson2.JSONObject;
+import org.tiny.mvc.anno.PathVariable;
 import org.tiny.mvc.anno.RequestBody;
 import org.tiny.mvc.anno.RequestParam;
+import org.tiny.mvc.common.Invoker;
 import org.tiny.mvc.util.ByteArrayList;
 import org.tiny.spring.common.Converter;
 
@@ -11,6 +13,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.lang.annotation.Annotation;
+import java.util.Map;
 
 /**
  * @author: wuzihan (wuzihan@youzan.com)
@@ -19,12 +22,13 @@ import java.lang.annotation.Annotation;
  */
 public class BaseArgResolver implements ArgResolver {
     @Override
-    public Object resolveArg(Class argClass, String argName, Annotation[] argAnnos, HttpServletRequest req, HttpServletResponse response) {
+    public Object resolveArg(Class argClass, String argName, Annotation[] argAnnos, HttpServletRequest req, HttpServletResponse response, Invoker invoker) {
         if (argClass == HttpServletRequest.class) {
             return req;
         } else if (argClass == HttpServletResponse.class) {
             return response;
         } else {
+            Map<String, String> pathVariableMap = invoker.getMvcPath().getPathVariableMap(req.getServletPath());
             for (Annotation anno : argAnnos) {
                 if (anno.annotationType() == RequestBody.class) {
                     return parseRequestBody(argClass, req);
@@ -32,6 +36,9 @@ public class BaseArgResolver implements ArgResolver {
                 if (anno.annotationType() == RequestParam.class) {
                     RequestParam reqAnno = (RequestParam) anno;
                     return parseRequestParam(argClass, argName, reqAnno, req);
+                }
+                if (anno.annotationType() == PathVariable.class) {
+                    return pathVariableMap.get(argName);
                 }
             }
         }

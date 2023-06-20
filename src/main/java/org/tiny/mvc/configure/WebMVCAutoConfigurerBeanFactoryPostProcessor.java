@@ -1,5 +1,6 @@
 package org.tiny.mvc.configure;
 
+import org.tiny.mvc.common.GlobalExceptionAspect;
 import org.tiny.mvc.core.ContextStarter;
 import org.tiny.mvc.core.response.handler.JSONResponseHandler;
 import org.tiny.mvc.core.MVCBeanPostProcessor;
@@ -20,6 +21,7 @@ public class WebMVCAutoConfigurerBeanFactoryPostProcessor implements BeanFactory
         registContextStarter(container);
         registJSONResponseHandler(container);
         registBaseArgResolver(container);
+        registGlobalExceptionAspect(container);
     }
 
     private void registAutoConfiguer(Container container) {
@@ -43,5 +45,9 @@ public class WebMVCAutoConfigurerBeanFactoryPostProcessor implements BeanFactory
     private void registJSONResponseHandler(Container container) {
         JSONResponseHandler responseHandler = new JSONResponseHandler();
         container.registerBean(responseHandler);
+    }
+
+    private void registGlobalExceptionAspect(Container container) {
+        container.registerBean(new GlobalExceptionAspect());
     }
 }

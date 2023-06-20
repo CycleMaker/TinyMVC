@@ -1,9 +1,11 @@
 package org.tiny.mvc.core;
-import org.tiny.mvc.common.ArgNameDiscover;
+
+import org.tiny.mvc.common.GlobalExceptionAspect;
 import org.tiny.mvc.common.Invoker;
 import org.tiny.mvc.common.MethodEnum;
 import org.tiny.mvc.core.arg.resolver.ArgResolverManager;
-import org.tiny.mvc.core.response.handler.ResponseHandler;
+import org.tiny.spring.annotation.Extension;
+import org.tiny.spring.core.aop.AopContext;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -13,25 +15,16 @@ import java.io.IOException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.util.*;
+import java.util.stream.Collectors;
 
-/**
- * @author: wuzihan (wuzihan@youzan.com)
- * @create: 2023-04-20 15 :47
- * @description
- */
+
 public class MVCServlet extends HttpServlet {
-
-    private ArgNameDiscover argNameDiscover;
-
-    private ResponseHandler responseHandler;
-
-    private Map<MethodEnum, Invoker> httpMethodMap;
-
-    private String contentType;
 
     private String servletName;
 
     private String path;
+
+    private List<Invoker> invokers;
 
     private static ArgResolverManager argResolverManager = ArgResolverManager.getInstance();
 
@@ -44,41 +37,54 @@ public class MVCServlet extends HttpServlet {
         return servletName;
     }
 
-    public MVCServlet(Map<MethodEnum, Invoker> httpMethodMap, String servletName, String path, ArgNameDiscover argNameDiscover, String contentType, ResponseHandler responseHandler) {
-        this.httpMethodMap = httpMethodMap;
+    public MVCServlet(String servletName, String path, List<Invoker> invokers) {
+        if (invokers == null || invokers.size() == 0) {
+            throw new IllegalArgumentException();
+        }
         this.servletName = servletName;
         this.path = path;
-        this.argNameDiscover = argNameDiscover;
-        this.contentType = contentType;
-        this.responseHandler = responseHandler;
+        this.invokers = invokers;
+    }
+
+    // only for cglib
+    public MVCServlet() {
     }
 
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        Invoker getInvoker = httpMethodMap.get(MethodEnum.GetMethod);
-        if (Objects.nonNull(getInvoker)) {
-            invoke(getInvoker, req, resp);
-        }
+        getAgent().handle(req, resp, MethodEnum.GetMethod);
     }
 
     @Override
-    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException, IOException {
-        Invoker postInvoker = httpMethodMap.get(MethodEnum.PostMethod);
-        if (Objects.nonNull(postInvoker)) {
-            invoke(postInvoker, req, resp);
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+        getAgent().handle(req, resp, MethodEnum.PostMethod);
+    }
+
+
+    @Extension(aspect = GlobalExceptionAspect.class)
+    public void handle(HttpServletRequest req, HttpServletResponse resp, MethodEnum methodEnum) throws IOException {
+        Optional<Invoker> invoker = invokers.stream().filter(item -> item.matchPath(req.getRequestURI())).findFirst();
+        if (invoker.isPresent()) {
+            invoke(invoker.get(), req, resp);
         }
     }
 
-    private void invoke(Invoker invoker, HttpServletRequest req, HttpServletResponse resp) throws IOException {
-        List<Object> args = resolveArgument(invoker.getMethod(), req, resp);
-        Object res = invoker.invoke(args);
-        resp.setCharacterEncoding("UTF-8");
-        resp.setContentType(contentType);
-        responseHandler.handleResponse(contentType, resp, invoker.getMethod(), res);
+    private MVCServlet getAgent() {
+        MVCServlet agent = AopContext.getAgent(this.getClass());
+        if (Objects.nonNull(agent)) {
+            return agent;
+        }
+        return this;
     }
 
-    public List<Object> resolveArgument(Method method, HttpServletRequest req, HttpServletResponse resp) {
+    private void invoke(Invoker invoker, HttpServletRequest req, HttpServletResponse resp) throws IOException {
+        List<Object> args = resolveArgument(invoker.getMethod(), req, resp, invoker);
+        Object res = invoker.invoke(args);
+        invoker.getResponseHandler().handleResponse(invoker.getContentType(), resp, invoker.getMethod(), res);
+    }
+
+    public List<Object> resolveArgument(Method method, HttpServletRequest req, HttpServletResponse resp, Invoker invoker) {
         List<Object> arguments = new ArrayList<>();
         Class<?>[] parameterTypes = method.getParameterTypes();
         Parameter[] parameters = method.getParameters();
@@ -87,7 +93,7 @@ public class MVCServlet extends HttpServlet {
         }
         for (int i = 0; i < parameterTypes.length; i++) {
             Class clazz = parameterTypes[i];
-            arguments.add(argResolverManager.resolveArg(clazz, argNameDiscover.getArg(method, i), parameters[i].getDeclaredAnnotations(), req, resp));
+            arguments.add(argResolverManager.resolveArg(clazz, invoker.getArgNameDiscover().getArg(method, i), parameters[i].getDeclaredAnnotations(), req, resp, invoker));
         }
         return arguments;
     }

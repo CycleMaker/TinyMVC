@@ -1,5 +1,7 @@
 package org.tiny.mvc.core.arg.resolver;
 
+import org.tiny.mvc.common.Invoker;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.lang.annotation.Annotation;
@@ -24,9 +26,9 @@ public class ArgResolverManager {
         resolvers = new ArrayList<>();
     }
 
-    public Object resolveArg(Class argClass, String argName, Annotation[] argAnnos, HttpServletRequest req, HttpServletResponse response) {
+    public Object resolveArg(Class argClass, String argName, Annotation[] argAnnos, HttpServletRequest req, HttpServletResponse response, Invoker invoker) {
         for (ArgResolver resolver : resolvers) {
-            Object arg = resolver.resolveArg(argClass, argName, argAnnos, req, response);
+            Object arg = resolver.resolveArg(argClass, argName, argAnnos, req, response, invoker);
             if (Objects.nonNull(arg)) {
                 return arg;
             }

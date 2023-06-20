@@ -2,7 +2,9 @@ package org.tiny.mvc.common;
 
 import lombok.Data;
 import lombok.ToString;
+import org.tiny.mvc.core.response.handler.ResponseHandler;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Arrays;
@@ -18,10 +20,24 @@ import java.util.List;
 public class Invoker {
     private Object bean;
     private Method method;
+    private MethodEnum methodEnum;
+    private MVCPath mvcPath;
+    private ResponseHandler responseHandler;
+    private ArgNameDiscover argNameDiscover;
+    private String contentType;
 
-    public Invoker(Object bean,Method method) {
+    public Invoker(String contentType, Object bean, Method method, MethodEnum methodEnum, String path, ResponseHandler responseHandler, ArgNameDiscover argNameDiscover) {
+        this.contentType = contentType;
         this.bean = bean;
         this.method = method;
+        this.mvcPath = new MVCPath(path);
+        this.responseHandler = responseHandler;
+        this.methodEnum = methodEnum;
+        this.argNameDiscover = argNameDiscover;
+    }
+
+    public boolean matchPath(String requestPath) {
+        return mvcPath.isSupport(requestPath);
     }
 
 

@@ -3,7 +3,6 @@ package org.tiny.mvc.core;
 import org.tiny.mvc.anno.ContentType;
 import org.tiny.mvc.anno.Controller;
 import org.tiny.mvc.anno.GetMapping;
-import org.tiny.mvc.anno.PostMapping;
 import org.tiny.mvc.common.ArgNameDiscover;
 import org.tiny.mvc.common.ContentTypeEnum;
 import org.tiny.mvc.common.Invoker;
@@ -13,7 +12,9 @@ import org.tiny.spring.Container;
 import org.tiny.spring.annotation.Autowired;
 import org.tiny.spring.core.processor.BeanPostProcessor;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.*;
 
 /**
@@ -24,38 +25,20 @@ import java.util.*;
 
 public class MVCBeanPostProcessor implements BeanPostProcessor {
     private static final String DEFAULT_CONTENT_TYPE = ContentTypeEnum.JSON.getType();
+
+    private static final Integer PRIORITY = 90;
+
     @Autowired
     private Container container;
 
     public Object postProcessAfterInitialization(Object bean, String beanName) {
         Controller controllerAnno = getControllerAnno(bean);
         if (Objects.nonNull(controllerAnno)) {
-            String controllerPath = controllerAnno.path();
-            for (Method method : bean.getClass().getDeclaredMethods()) {
-                ContentType contentTypeAnno = method.getDeclaredAnnotation(ContentType.class);
-                String contentType = Objects.isNull(contentTypeAnno) ? DEFAULT_CONTENT_TYPE : contentTypeAnno.value();
-                Map<MethodEnum, Invoker> methodMap = new HashMap<>();
-                GetMapping getMapping = acquireGetMappingAnno(method);
-                PostMapping postMapping = acquirePostMappingAnno(method);
-                String path = fixPathWithSlash(controllerPath);
-                String methodType = "";
-                if (Objects.nonNull(getMapping)) {
-                    path += fixPathWithoutSlash(getMapping.value());
-                    methodType = MethodEnum.GetMethod.name();
-                    methodMap.put(MethodEnum.GetMethod, new Invoker(bean, method));
-                }
-                if (Objects.nonNull(postMapping)) {
-                    path += fixPathWithoutSlash(postMapping.value());
-                    methodType = MethodEnum.PostMethod.name();
-                    methodMap.put(MethodEnum.PostMethod, new Invoker(bean, method));
-                }
-                if (Objects.nonNull(getMapping) || Objects.nonNull(postMapping)) {
-                    ArgNameDiscover argNameDiscover = new ArgNameDiscover();
-                    argNameDiscover.discover(method);
-                    String servletName = beanName + "@Servlet@" + path + "@" + methodType;
-                    ResponseHandler responseHandler = getResponseHandler(contentType, method);
-                    container.registerBean(servletName, new MVCServlet(methodMap, servletName, path, argNameDiscover, contentType, responseHandler), true);
-                }
+            String controllerPath = fixPathWithSlash(controllerAnno.path());
+            List<Invoker> invokers = listMappingAnnoClass(bean, bean.getClass().getDeclaredMethods(), new ArgNameDiscover());
+            if (!invokers.isEmpty()) {
+                String servletName = beanName + "@Servlet@" + controllerPath;
+                container.registerBean(servletName, new MVCServlet(servletName, controllerPath, invokers), true);
             }
         }
         return bean;
@@ -73,20 +56,42 @@ public class MVCBeanPostProcessor implements BeanPostProcessor {
         throw new RuntimeException("cannot find suitable ResponseHandler for contentType:" + contentType);
     }
 
-    private GetMapping acquireGetMappingAnno(Method method) {
-        return method.getAnnotation(GetMapping.class);
+    private List<Invoker> listMappingAnnoClass(Object bean, Method[] methods, ArgNameDiscover argNameDiscover) {
+        List<Invoker> res = new ArrayList<>();
+        for (Method m : methods) {
+            if (Modifier.isPublic(m.getModifiers())) {
+                List<Invoker> item = listMappingAnnoClass(bean, m, argNameDiscover);
+                res.addAll(item);
+            }
+        }
+        return res;
     }
 
-    private PostMapping acquirePostMappingAnno(Method method) {
-        return method.getAnnotation(PostMapping.class);
+    private List<Invoker> listMappingAnnoClass(Object bean, Method method, ArgNameDiscover argNameDiscover) {
+        List<Invoker> res = new ArrayList<>();
+        for (MethodEnum methodEnum : MethodEnum.values()) {
+            Annotation annotation = method.getAnnotation(methodEnum.getAnnoClass());
+            if (Objects.nonNull(annotation)) {
+                argNameDiscover.discover(method);
+                String path = MethodEnum.getPath(annotation);
+                ContentType contentTypeAnno = method.getDeclaredAnnotation(ContentType.class);
+                String contentType = Objects.isNull(contentTypeAnno) ? DEFAULT_CONTENT_TYPE : contentTypeAnno.value();
+                ResponseHandler responseHandler = getResponseHandler(contentType, method);
+                res.add(new Invoker(contentType, bean, method, methodEnum, fixPathWithoutSlash(path), responseHandler, argNameDiscover));
+            }
+        }
+        return res;
     }
+
 
 
     private String fixPathWithSlash(String path) {
-        if (path.startsWith("/")) {
-            return path;
+        if (!path.startsWith("/")) {
+            path = "/" + path;
         }
-        path = "/" + path;
+        if (!path.endsWith("/")) {
+            path = path + "/";
+        }
         return path;
     }
 
@@ -96,4 +101,10 @@ public class MVCBeanPostProcessor implements BeanPostProcessor {
         }
         return path;
     }
+
+    @Override
+    public int priority() {
+        return PRIORITY;
+    }
+
 }
