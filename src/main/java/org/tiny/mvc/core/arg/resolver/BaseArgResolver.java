@@ -4,7 +4,7 @@ import com.alibaba.fastjson2.JSONObject;
 import org.tiny.mvc.anno.PathVariable;
 import org.tiny.mvc.anno.RequestBody;
 import org.tiny.mvc.anno.RequestParam;
-import org.tiny.mvc.common.Invoker;
+import org.tiny.mvc.core.Invoker;
 import org.tiny.mvc.util.ByteArrayList;
 import org.tiny.spring.common.Converter;
 

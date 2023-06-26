@@ -1,4 +1,4 @@
-package org.tiny.mvc.common;
+package org.tiny.mvc.core;
 
 
 import org.tiny.spring.core.aop.Aspect;

@@ -2,9 +2,7 @@ package org.tiny.mvc.core;
 
 import org.tiny.mvc.anno.ContentType;
 import org.tiny.mvc.anno.Controller;
-import org.tiny.mvc.common.ArgNameDiscover;
 import org.tiny.mvc.common.ContentTypeEnum;
-import org.tiny.mvc.common.Invoker;
 import org.tiny.mvc.common.MethodEnum;
 import org.tiny.mvc.core.response.handler.ResponseHandler;
 import org.tiny.spring.Container;
@@ -15,7 +13,6 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.*;
-
 /**
  * @author: wuzihan (wuzihan@youzan.com)
  * @create: 2023-04-20 15 :46
@@ -74,7 +71,10 @@ public class MVCBeanPostProcessor implements BeanPostProcessor {
                 argNameDiscover.discover(method);
                 String path = MethodEnum.getPath(annotation);
                 ContentType contentTypeAnno = method.getDeclaredAnnotation(ContentType.class);
-                String contentType = Objects.isNull(contentTypeAnno) ? DEFAULT_CONTENT_TYPE : contentTypeAnno.value();
+                String contentType = Objects.isNull(contentTypeAnno)? DEFAULT_CONTENT_TYPE : contentTypeAnno.value();
+                if (contentType.length() == 0) {
+                    contentType = contentTypeAnno.type().getType();
+                }
                 ResponseHandler responseHandler = getResponseHandler(contentType, method);
                 res.add(new Invoker(contentType, bean, method, methodEnum, controllerPath + fixPathWithoutSlash(path), responseHandler, argNameDiscover));
             }

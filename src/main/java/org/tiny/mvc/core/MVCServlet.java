@@ -1,7 +1,5 @@
 package org.tiny.mvc.core;
 
-import org.tiny.mvc.common.GlobalExceptionAspect;
-import org.tiny.mvc.common.Invoker;
 import org.tiny.mvc.common.MethodEnum;
 import org.tiny.mvc.core.arg.resolver.ArgResolverManager;
 import org.tiny.spring.Container;

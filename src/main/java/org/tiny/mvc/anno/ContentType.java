@@ -1,5 +1,6 @@
 package org.tiny.mvc.anno;
 
+import org.tiny.mvc.common.ContentTypeEnum;
 import org.tiny.spring.annotation.Bean;
 
 import java.lang.annotation.*;
@@ -14,5 +15,7 @@ import java.lang.annotation.*;
 @Documented
 @Bean
 public @interface ContentType {
-    String value();
+    String value() default "";
+    // if value field is not blank,this field will ignore
+    ContentTypeEnum type() default ContentTypeEnum.JSON;
 }

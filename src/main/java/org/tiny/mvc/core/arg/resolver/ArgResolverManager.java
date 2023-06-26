@@ -1,6 +1,6 @@
 package org.tiny.mvc.core.arg.resolver;
 
-import org.tiny.mvc.common.Invoker;
+import org.tiny.mvc.core.Invoker;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;

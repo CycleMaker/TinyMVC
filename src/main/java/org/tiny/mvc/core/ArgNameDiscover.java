@@ -1,4 +1,4 @@
-package org.tiny.mvc.common;
+package org.tiny.mvc.core;
 
 import com.sun.org.apache.bcel.internal.generic.Type;
 import org.objectweb.asm.*;
